@@ -177,4 +177,9 @@ query_job = client.query(zero_pollution_query, job_config=safe_config)
 
 zero_pollution_results = query_job.to_dataframe()
 
+That query wasn't too complicated, and it got the data you want. But these SELECT queries don't organizing data in a way that answers the most interesting questions. For that, we'll
+need the GROUP BY command.
+
+If you know how to use groupby() in pandas, this is similar. But BigQuery works quickly with far larger datasets.
+Fortunately, that's next.
 ****************
