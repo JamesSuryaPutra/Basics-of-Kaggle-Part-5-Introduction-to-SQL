@@ -1,0 +1,180 @@
+<Introduction>
+Try writing some SELECT statements of your own to explore a large dataset of air pollution measurements.
+Run the cell below to set up the feedback system.
+
+****************
+# Set up feedback system
+from learntools.core import binder
+binder.bind(globals())
+from learntools.sql.ex2 import *
+print("Setup Complete")
+
+Using Kaggle's public dataset BigQuery integration.
+Setup Complete
+****************
+
+The code cell below fetches the global_air_quality table from the openaq dataset. We also preview the first five rows of the table.
+
+****************
+from google.cloud import bigquery
+
+# Create a "Client" object
+client = bigquery.Client()
+
+# Construct a reference to the "openaq" dataset
+dataset_ref = client.dataset("openaq", project="bigquery-public-data")
+
+# API request - fetch the dataset
+dataset = client.get_dataset(dataset_ref)
+
+# Construct a reference to the "global_air_quality" table
+table_ref = dataset_ref.table("global_air_quality")
+
+# API request - fetch the table
+table = client.get_table(table_ref)
+
+# Preview the first five lines of the "global_air_quality" table
+client.list_rows(table, max_results=5).to_dataframe()
+
+Using Kaggle's public dataset BigQuery integration.
+
+location	city	country	pollutant	value	timestamp	unit	source_name	latitude	longitude	averaged_over_in_hours	location_geom
+0	Borówiec, ul. Drapałka	Borówiec	PL	bc	0.85217	2022-04-28 07:00:00+00:00	µg/m³	GIOS	1.0	52.276794	17.074114	POINT(52.276794 1)
+1	Kraków, ul. Bulwarowa	Kraków	PL	bc	0.91284	2022-04-27 23:00:00+00:00	µg/m³	GIOS	1.0	50.069308	20.053492	POINT(50.069308 1)
+2	Płock, ul. Reja	Płock	PL	bc	1.41000	2022-03-30 04:00:00+00:00	µg/m³	GIOS	1.0	52.550938	19.709791	POINT(52.550938 1)
+3	Elbląg, ul. Bażyńskiego	Elbląg	PL	bc	0.33607	2022-05-03 13:00:00+00:00	µg/m³	GIOS	1.0	54.167847	19.410942	POINT(54.167847 1)
+4	Piastów, ul. Pułaskiego	Piastów	PL	bc	0.51000	2022-05-11 05:00:00+00:00	µg/m³	GIOS	1.0	52.191728	20.837489	POINT(52.191728 1)
+****************
+
+<Exercise 1 - Units of measurement>
+Which countries have reported pollution levels in units of "ppm"? In the code cell below, set first_query to an SQL query that pulls the appropriate entries from the country column.
+In case, it's useful to see an example query, here's some code from the tutorial:
+
+query = """
+        SELECT city
+        FROM `bigquery-public-data.openaq.global_air_quality`
+        WHERE country = 'US'
+        """
+
+****************
+# Query to select countries with units of "ppm"
+# Your code goes here
+first_query = """
+              SELECT country
+              FROM `bigquery-public-data.openaq.global_air_quality`
+              WHERE unit = "ppm"
+              """
+
+# Set up the query (cancel the query if it would use too much of 
+# your quota, with the limit set to 10 GB)
+safe_config = bigquery.QueryJobConfig(maximum_bytes_billed=10**10)
+first_query_job = client.query(first_query, job_config=safe_config)
+
+# API request - run the query, and return a pandas DataFrame
+first_results = first_query_job.to_dataframe()
+
+# View top few rows of results
+print(first_results.head())
+
+# Check your answer
+q_1.check()
+
+country
+0      AR
+1      IL
+2      IL
+3      AR
+4      AR
+You got the right countries. Nice job! Some countries showed up many times in the results. To get each country only once you can run `SELECT DISTINCT country ...`. The DISTINCT keyword
+ensures each column shows up once, which you'll want in some cases.
+
+Correct
+
+For the solution, uncomment the line below.
+
+q_1.solution()
+
+Solution:
+
+first_query = """
+              SELECT country
+              FROM `bigquery-public-data.openaq.global_air_quality`
+              WHERE unit = "ppm"
+              """
+
+# Or to get each country just once, you could use
+first_query = """
+              SELECT DISTINCT country
+              FROM `bigquery-public-data.openaq.global_air_quality`
+              WHERE unit = "ppm"
+              """
+
+****************
+
+<Exercise 2 - High air quality>
+Which pollution levels were reported to be exactly 0?
+1} Set zero_pollution_query to select all columns of the rows where the value column is 0.
+2} Set zero_pollution_results to a pandas DataFrame containing the query results.
+
+****************
+# Query to select all columns where pollution levels are exactly 0
+# Your code goes here
+zero_pollution_query = """
+                       SELECT *
+                       FROM `bigquery-public-data.openaq.global_air_quality`
+                       WHERE value = 0
+                       """ 
+
+# Set up the query
+safe_config = bigquery.QueryJobConfig(maximum_bytes_billed=10**10)
+query_job = client.query(zero_pollution_query, job_config=safe_config)
+
+# API request - run the query and return a pandas DataFrame
+zero_pollution_results = query_job.to_dataframe() # Your code goes here
+
+print(zero_pollution_results.head())
+
+# Check your answer
+q_2.check()
+
+   location                 city country  \
+0           Koszalin, ul. Armii Krajowej             Koszalin      PL   
+1             Żary, ul. Szymanowskiego 8                 Żary      PL   
+2                  Kraków, ul. Bulwarowa               Kraków      PL   
+3  Gorzów Wlkp. ul. Kosynierów Gdyńskich  Gorzów Wielkopolski      PL   
+4              Zielonka, Bory Tucholskie             Zielonka      PL   
+
+  pollutant  value                 timestamp   unit source_name  latitude  \
+0        bc    0.0 2022-05-05 01:00:00+00:00  µg/m³        GIOS       1.0   
+1        bc    0.0 2022-05-02 12:00:00+00:00  µg/m³        GIOS       1.0   
+2        bc    0.0 2022-04-08 04:00:00+00:00  µg/m³        GIOS       1.0   
+3        bc    0.0 2022-05-12 16:00:00+00:00  µg/m³        GIOS       1.0   
+4        bc    0.0 2022-04-16 04:00:00+00:00  µg/m³        GIOS       1.0   
+
+   longitude  averaged_over_in_hours       location_geom  
+0  54.193986               16.172544  POINT(54.193986 1)  
+1  51.642656               15.127808  POINT(51.642656 1)  
+2  50.069308               20.053492  POINT(50.069308 1)  
+3  52.738214               15.228667  POINT(52.738214 1)  
+4  53.662136               17.933986  POINT(53.662136 1)  
+
+Correct
+
+For the solution, uncomment the line below.
+
+q_2.solution()
+
+Solution:
+
+zero_pollution_query = """
+                       SELECT *
+                       FROM `bigquery-public-data.openaq.global_air_quality`
+                       WHERE value = 0
+                       """
+
+safe_config = bigquery.QueryJobConfig(maximum_bytes_billed=10**10)
+query_job = client.query(zero_pollution_query, job_config=safe_config)
+
+zero_pollution_results = query_job.to_dataframe()
+
+****************
