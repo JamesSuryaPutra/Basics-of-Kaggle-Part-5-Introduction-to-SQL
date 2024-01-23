@@ -1,0 +1,178 @@
+<Introduction>
+The first test of your new data exploration skills uses data describing crime in the city of Chicago.
+Before you get started, run the following cell. It sets up the automated feedback system to review your answers.
+
+****************
+# Set up feedack system
+from learntools.core import binder
+binder.bind(globals())
+from learntools.sql.ex1 import *
+print("Setup Complete")
+
+Using Kaggle's public dataset BigQuery integration.
+Setup Complete
+****************
+
+Use the next code cell to fetch the dataset.
+
+****************
+from google.cloud import bigquery
+
+# Create a "Client" object
+client = bigquery.Client()
+
+# Construct a reference to the "chicago_crime" dataset
+dataset_ref = client.dataset("chicago_crime", project="bigquery-public-data")
+
+# API request - fetch the dataset
+dataset = client.get_dataset(dataset_ref)
+
+Using Kaggle's public dataset BigQuery integration.
+****************
+
+<Exercise 1 - Count tables in the dataset>
+How many tables are in the Chicago Crime dataset?
+
+****************
+# Write the code you need here to figure out the answer
+tables = list(client.list_tables(dataset))
+
+# Print number of tables in the dataset
+print(len(tables))
+
+1
+
+num_tables = 1 # Store the answer as num_tables and then run this cell
+
+# Check your answer
+q_1.check()
+
+Correct
+
+For a hint or the solution, uncomment the appropriate line below.
+
+q_1.hint()
+q_1.solution()
+
+Hint:
+Use the list_tables() method to get a list of the tables in the dataset.
+
+Solution:
+
+# List all the tables in the "chicago_crime" dataset
+tables = list(client.list_tables(dataset))
+
+# Print number of tables in the dataset
+print(len(tables))
+
+num_tables = 1
+
+****************
+
+<Exercise 2 - Explore the table schema>
+How many columns in the crime table have TIMESTAMP data?
+
+****************
+# Construct a reference to the "crime" table
+table_ref = dataset_ref.table("crime")
+​
+# API request: fetch the dataset
+table = client.get_table(table_ref)
+​
+# Print number of tables in the dataset
+print(table.schema)
+
+[SchemaField('unique_key', 'INTEGER', 'REQUIRED', None, (), None), SchemaField('case_number', 'STRING', 'NULLABLE', None, (), None), SchemaField('date', 'TIMESTAMP', 'NULLABLE', None,
+(), None), SchemaField('block', 'STRING', 'NULLABLE', None, (), None), SchemaField('iucr', 'STRING', 'NULLABLE', None, (), None), SchemaField('primary_type', 'STRING', 'NULLABLE', None,
+(), None), SchemaField('description', 'STRING', 'NULLABLE', None, (), None), SchemaField('location_description', 'STRING', 'NULLABLE', None, (), None), SchemaField('arrest', 'BOOLEAN',
+'NULLABLE', None, (), None), SchemaField('domestic', 'BOOLEAN', 'NULLABLE', None, (), None), SchemaField('beat', 'INTEGER', 'NULLABLE', None, (), None), SchemaField('district',
+'INTEGER', 'NULLABLE', None, (), None), SchemaField('ward', 'INTEGER', 'NULLABLE', None, (), None), SchemaField('community_area', 'INTEGER', 'NULLABLE', None, (), None),
+SchemaField('fbi_code', 'STRING', 'NULLABLE', None, (), None), SchemaField('x_coordinate', 'FLOAT', 'NULLABLE', None, (), None), SchemaField('y_coordinate', 'FLOAT', 'NULLABLE', None,
+(), None), SchemaField('year', 'INTEGER', 'NULLABLE', None, (), None), SchemaField('updated_on', 'TIMESTAMP', 'NULLABLE', None, (), None), SchemaField('latitude', 'FLOAT', 'NULLABLE',
+None, (), None), SchemaField('longitude', 'FLOAT', 'NULLABLE', None, (), None), SchemaField('location', 'STRING', 'NULLABLE', None, (), None)]
+
+num_timestamp_fields = 2 # Put your answer here
+
+# Check your answer
+q_2.check()
+
+Correct
+
+For a hint or the solution, uncomment the appropriate line below.
+
+q_2.hint()
+q_2.solution()
+
+Hint:
+Begin by fetching the crime table. Then take a look at the table schema, and check the field type of each column. How many times does 'TIMESTAMP' appear?
+
+Solution:
+
+# Construct a reference to the "crime" table
+table_ref = dataset_ref.table("crime")
+
+# API request - fetch the table
+table = client.get_table(table_ref)
+
+# Print information on all the columns in the "crime" table in the "chicago_crime" dataset
+print(table.schema)
+
+num_timestamp_fields = 2
+
+****************
+
+<Exercise 3 - Create a crime map>
+If you wanted to create a map with a dot at the location of each crime, what are the names of the two fields you likely need to pull out of the crime table to plot the crimes on a map?
+
+****************
+# Write the code here to explore the data so you can find the answer
+client.list_rows(table, max_results=5).to_dataframe()
+
+unique_key	case_number	date	block	iucr	primary_type	description	location_description	arrest	domestic	...	ward	community_area	fbi_code	x_coordinate	y_coordinate	year	updated_on	latitude	longitude	location
+0	9797558	HX446760	2013-09-23 10:00:00+00:00	0000X E WACKER DR	0281	CRIM SEXUAL ASSAULT	NON-AGGRAVATED	HOTEL/MOTEL	False	False	...	42	32	02	1176971.0	1902537.0	2013	2018-02-10 03:50:01+00:00	41.887904	-87.625555	(41.887904127, -87.625554948)
+1	12490107	JE382792	2021-09-22 04:40:00+00:00	002XX N WABASH AVE	0281	CRIMINAL SEXUAL ASSAULT	NON-AGGRAVATED	HOTEL / MOTEL	False	False	...	42	32	02	1176777.0	1901808.0	2021	2021-09-29 03:41:20+00:00	41.885908	-87.626289	(41.885908101, -87.626289429)
+2	5315006	HN175380	2007-02-13 08:45:00+00:00	005XX W LAKE ST	031A	ROBBERY	ARMED: HANDGUN	OTHER	False	False	...	42	28	03	1172530.0	1901698.0	2007	2018-02-28 03:56:25+00:00	41.885701	-87.641888	(41.885701217, -87.641888429)
+3	4481557	HL779962	2005-12-09 12:00:00+00:00	002XX S CANAL ST	031A	ROBBERY	ARMED: HANDGUN	OTHER COMMERCIAL TRANSPORTATION	False	False	...	2	28	03	1173177.0	1899236.0	2005	2018-02-10 03:50:01+00:00	41.878931	-87.639586	(41.878931004, -87.639585621)
+4	7997004	HT227994	2011-03-31 09:30:00+00:00	005XX W JACKSON BLVD	0320	ROBBERY	STRONGARM - NO WEAPON	STREET	False	False	...	2	28	03	1173084.0	1898910.0	2011	2018-02-10 03:50:01+00:00	41.878039	-87.639937	(41.878038501, -87.639936767)
+
+fields_for_plotting = ['latitude', 'longitude'] # Put your answers here
+
+# Check your answer
+q_3.check()
+
+Correct
+
+For a hint or the solution, uncomment the appropriate line below.
+
+q_3.hint()
+q_3.solution()
+
+Hint:
+Look at the table schema. There are a couple options, but two of the fields are things commonly used to plot on maps. Both are 'FLOAT' types. Use quotes around the field names in your
+answer.
+
+Solution:
+fields_for_plotting = ['latitude', 'longitude']
+
+Thinking about the question above, there are a few columns that appear to have geographic data. Look at a few values (with the list_rows() command) to see if you can determine their
+relationship. Two columns will still be hard to interpret. But it should be obvious how the location column relates to latitude and longitude.
+****************
+
+<Optional - Scratch space for your code>
+
+****************
+client.list_rows(table, max_results=11).to_dataframe()
+
+unique_key	case_number	date	block	iucr	primary_type	description	location_description	arrest	domestic	...	ward	community_area	fbi_code	x_coordinate	y_coordinate	year	updated_on	latitude	longitude	location
+0	9797558	HX446760	2013-09-23 10:00:00+00:00	0000X E WACKER DR	0281	CRIM SEXUAL ASSAULT	NON-AGGRAVATED	HOTEL/MOTEL	False	False	...	42	32	02	1176971.0	1902537.0	2013	2018-02-10 03:50:01+00:00	41.887904	-87.625555	(41.887904127, -87.625554948)
+1	12490107	JE382792	2021-09-22 04:40:00+00:00	002XX N WABASH AVE	0281	CRIMINAL SEXUAL ASSAULT	NON-AGGRAVATED	HOTEL / MOTEL	False	False	...	42	32	02	1176777.0	1901808.0	2021	2021-09-29 03:41:20+00:00	41.885908	-87.626289	(41.885908101, -87.626289429)
+2	5315006	HN175380	2007-02-13 08:45:00+00:00	005XX W LAKE ST	031A	ROBBERY	ARMED: HANDGUN	OTHER	False	False	...	42	28	03	1172530.0	1901698.0	2007	2018-02-28 03:56:25+00:00	41.885701	-87.641888	(41.885701217, -87.641888429)
+3	4481557	HL779962	2005-12-09 12:00:00+00:00	002XX S CANAL ST	031A	ROBBERY	ARMED: HANDGUN	OTHER COMMERCIAL TRANSPORTATION	False	False	...	2	28	03	1173177.0	1899236.0	2005	2018-02-10 03:50:01+00:00	41.878931	-87.639586	(41.878931004, -87.639585621)
+4	7997004	HT227994	2011-03-31 09:30:00+00:00	005XX W JACKSON BLVD	0320	ROBBERY	STRONGARM - NO WEAPON	STREET	False	False	...	2	28	03	1173084.0	1898910.0	2011	2018-02-10 03:50:01+00:00	41.878039	-87.639937	(41.878038501, -87.639936767)
+5	10347785	HY538756	2015-12-15 10:05:00+00:00	002XX N STATE ST	0320	ROBBERY	STRONGARM - NO WEAPON	VEHICLE - OTHER RIDE SERVICE	False	False	...	42	32	03	1176310.0	1902226.0	2015	2018-02-10 03:50:01+00:00	41.887066	-87.627992	(41.887065662, -87.627991716)
+6	5864748	HN659795	2007-10-20 03:17:00+00:00	002XX S WACKER DR	0320	ROBBERY	STRONGARM - NO WEAPON	DRUG STORE	True	False	...	2	32	03	1173899.0	1899160.0	2007	2018-02-10 03:50:01+00:00	41.878706	-87.636937	(41.87870641, -87.63693686)
+7	11969547	JD137176	2020-02-02 08:58:00+00:00	001XX N STATE ST	0320	ROBBERY	STRONG ARM - NO WEAPON	DRUG STORE	False	False	...	42	32	03	1176338.0	1901346.0	2020	2020-03-18 03:40:21+00:00	41.884650	-87.627915	(41.884650262, -87.627915459)
+8	10452654	HZ191734	2016-03-17 07:00:00+00:00	001XX N STATE ST	0320	ROBBERY	STRONGARM - NO WEAPON	SIDEWALK	False	False	...	42	32	03	1176352.0	1900927.0	2016	2018-02-10 03:50:01+00:00	41.883500	-87.627877	(41.883500187, -87.627876698)
+9	10955638	JA276311	2017-05-23 05:45:00+00:00	001XX N WABASH AVE	0330	ROBBERY	AGGRAVATED	RESTAURANT	False	False	...	42	32	03	1176788.0	1901453.0	2017	2018-02-10 03:50:01+00:00	41.884934	-87.626260	(41.884933714, -87.626259777)
+10	8289578	HT520971	2011-09-30 08:45:00+00:00	006XX W ADAMS ST	0330	ROBBERY	AGGRAVATED	STREET	False	False	...	2	28	03	1172201.0	1899351.0	2011	2018-02-10 03:50:01+00:00	41.879268	-87.643166	(41.879268164, -87.643165886)
+****************
