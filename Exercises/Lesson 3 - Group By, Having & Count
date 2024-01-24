@@ -1,0 +1,179 @@
+<Introduction>
+Queries with GROUP BY can be powerful. There are many small things that can trip you up (like the order of the clauses), but it will start to feel natural once you've done it a few times.
+Here, you'll write queries using GROUP BY to answer questions from the Hacker News dataset.
+Before you get started, run the following cell to set everything up:
+
+****************
+# Set up feedback system
+from learntools.core import binder
+binder.bind(globals())
+​
+# Read ex3.py and apply some "fixes"
+with open("/opt/conda/lib/python3.10/site-packages/learntools/sql/ex3.py","r") as f:
+    ex3 = f.read()
+    ex3 = ex3.replace("SELECT author","SELECT `by`") # need to use backtick since column name is 'by' which is also a SQL keyword
+    ex3 = ex3.replace("GROUP BY author","GROUP BY `by`")
+    ex3 = ex3.replace("\'author\'","\'by\'")
+    ex3 = ex3.replace("`author`","\`by\`")
+    ex3 = ex3.replace("bigquery-public-data.hacker_news.comments","bigquery-public-data.hacker_news.full")
+​
+    # Write fixes into v2 file
+    with open("/opt/conda/lib/python3.10/site-packages/learntools/sql/ex3_v2.py","w") as f2:
+        f2.write(ex3)
+​
+# Verify file looks good
+# with open("/opt/conda/lib/python3.10/site-packages/learntools/sql/ex3_v2.py","r") as f:
+#     print(f.read())
+​
+# Import v2
+from learntools.sql.ex3_v2 import *
+print("Setup complete.")
+
+Setup complete.
+****************
+
+The code cell below fetches the comments table from the hacker_news dataset. We also preview the first five rows of the table.
+
+****************
+from google.cloud import bigquery
+
+# Create a "Client" object
+client = bigquery.Client()
+
+# Construct a reference to the "hacker_news" dataset
+dataset_ref = client.dataset("hacker_news", project="bigquery-public-data")
+
+# API request - fetch the dataset
+dataset = client.get_dataset(dataset_ref)
+
+# Construct a reference to the entire table
+table_ref = dataset_ref.table("full")
+
+# API request - fetch the table
+table = client.get_table(table_ref)
+
+# Preview the first five lines of the "comments" table
+client.list_rows(table, max_results=5).to_dataframe()
+
+Using Kaggle's public dataset BigQuery integration.
+
+title	url	text	dead	by	score	time	timestamp	type	id	parent	descendants	ranking	deleted
+0	None	None	If the crocodile looked him up on Google, we b...	None	raxxorrax	NaN	1633421535	2021-10-05 08:12:15+00:00	comment	28756662	28750122	NaN	NaN	None
+1	None	None	What exactly are you looking for? I think Pyto...	None	abiro	NaN	1569141387	2019-09-22 08:36:27+00:00	comment	21040311	21040141	NaN	NaN	None
+2	None	None	Ironically, this very project might help out w...	None	mjevans	NaN	1505769703	2017-09-18 21:21:43+00:00	comment	15279716	15276626	NaN	NaN	None
+3	None	None	As you start to gain some experience it can be...	None	every_other	NaN	1538575027	2018-10-03 13:57:07+00:00	comment	18130207	18128477	NaN	NaN	None
+4	None	None	That’s what I was referring to, yes. I heard o...	None	manmal	NaN	1615664155	2021-03-13 19:35:55+00:00	comment	26449260	26449237	NaN	NaN	None
+****************
+
+<Exercise 1 - Prolific commenters>
+Hacker News would like to send awards to everyone who has written more than 10,000 posts. Write a query that returns all authors with more than 10,000 posts as well as their post counts.
+Call the column with post counts NumPosts.
+In case sample query is helpful, here is a query you saw in the tutorial to answer a similar question:
+
+query = """
+        SELECT parent, COUNT(1) AS NumPosts
+        FROM `bigquery-public-data.hacker_news.comments`
+        GROUP BY parent
+        HAVING COUNT(1) > 10
+        """
+
+
+****************
+# Query to select prolific commenters and post counts
+# Your code goes here
+prolific_commenters_query = """
+                            SELECT `by`, COUNT(1) AS NumPosts
+                            FROM `bigquery-public-data.hacker_news.full`
+                            GROUP BY `by`
+                            HAVING COUNT(id) > 10000
+                            """ 
+​
+# Set up the query (cancel the query if it would use too much of 
+# your quota, with the limit set to 1 GB)
+safe_config = bigquery.QueryJobConfig(maximum_bytes_billed=10**10)
+query_job = client.query(prolific_commenters_query, job_config=safe_config)
+​
+# API request - run the query, and return a pandas DataFrame
+prolific_commenters = query_job.to_dataframe()
+​
+# View top few rows of results
+print(prolific_commenters.head())
+​
+# Check your answer
+q_1.check()
+
+by  NumPosts
+0     sp332     16489
+1  masklinn     14922
+2     gruez     10013
+3   wpietri     10718
+4   jonbaer     12046
+
+Correct
+
+For the solution, uncomment the line below.
+
+q_1.solution()
+
+Solution:
+
+prolific_commenters_query = """
+                            SELECT `by`, COUNT(1) AS NumPosts
+                            FROM `bigquery-public-data.hacker_news.full`
+                            GROUP BY `by`
+                            HAVING COUNT(1) > 10000
+                            """
+
+****************
+
+<Exercise 2 - Deleted comments>
+How many comments have been deleted?
+(If a comment was deleted, the deleted column in the comments table will have the value True)
+
+****************
+# Write your query here and figure out the answer
+deleted_posts_query = """
+                      SELECT COUNT(1) AS num_deleted_posts
+                      FROM `bigquery-public-data.hacker_news.full`
+                      WHERE deleted = True
+                      """
+​
+query_job = client.query(deleted_posts_query)
+deleted_posts = query_job.to_dataframe()
+deleted_posts
+
+num_deleted_posts
+0	859401
+
+num_deleted_posts = deleted_posts.loc[0, 'num_deleted_posts'] # Put your answer here
+
+# Check your answer
+q_2.check()
+
+Correct
+
+For the solution, uncomment the line below.
+
+q_2.solution()
+
+Solution:
+
+# Query to determine how many posts were deleted
+deleted_posts_query = """
+                      SELECT COUNT(1) AS num_deleted_posts
+                      FROM `bigquery-public-data.hacker_news.full`
+                      WHERE deleted = True
+                      """
+
+# Set up the query
+query_job = client.query(deleted_posts_query)
+
+# API request - run the query, and return a pandas DataFrame
+deleted_posts = query_job.to_dataframe()
+
+# View results
+print(deleted_posts)
+
+num_deleted_posts = 859401
+
+****************
