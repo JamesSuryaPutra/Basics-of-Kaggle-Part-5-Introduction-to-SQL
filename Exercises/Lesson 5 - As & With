@@ -1,0 +1,394 @@
+<Introduction>
+You are getting to the point where you can own an analysis from beginning to end. So you'll do more data exploration in this exercise than you've done before. Before you get started,
+run the following set-up code as usual.
+
+****************
+# Get most recent checking code
+!pip install -U -t /kaggle/working/ git+https://github.com/Kaggle/learntools.git
+# Set up feedback system
+from learntools.core import binder
+binder.bind(globals())
+from learntools.sql.ex5 import *
+print("Setup Complete")
+
+Collecting git+https://github.com/Kaggle/learntools.git
+  Cloning https://github.com/Kaggle/learntools.git to /tmp/pip-req-build-hu9hqfz2
+  Running command git clone --filter=blob:none --quiet https://github.com/Kaggle/learntools.git /tmp/pip-req-build-hu9hqfz2
+  Resolved https://github.com/Kaggle/learntools.git to commit 3a07d14c8efd29d91d74a08bc9a92529941227df
+  Preparing metadata (setup.py) ... done
+Building wheels for collected packages: learntools
+  Building wheel for learntools (setup.py) ... done
+  Created wheel for learntools: filename=learntools-0.3.4-py3-none-any.whl size=268968 sha256=e8189c98dd1a40dd768992fb914db2fcc9d7a2c6d4d12e61629a5830e18e12aa
+  Stored in directory: /tmp/pip-ephem-wheel-cache-ozol3m1o/wheels/2f/6c/3c/aa9f50cfb5a862157cb4c7a5b34881828cf45404698255dced
+Successfully built learntools
+Installing collected packages: learntools
+Successfully installed learntools-0.3.4
+Using Kaggle's public dataset BigQuery integration.
+Setup Complete
+****************
+
+You'll work with a dataset about taxi trips in the city of Chicago. Run the cell below to fetch the chicago_taxi_trips dataset.
+
+****************
+from google.cloud import bigquery
+
+# Create a "Client" object
+client = bigquery.Client()
+
+# Construct a reference to the "chicago_taxi_trips" dataset
+dataset_ref = client.dataset("chicago_taxi_trips", project="bigquery-public-data")
+
+# API request - fetch the dataset
+dataset = client.get_dataset(dataset_ref)
+
+Using Kaggle's public dataset BigQuery integration.
+****************
+
+<Exercise 1 - Find the data>
+You are curious how much slower traffic moves when traffic volume is high. This involves a few steps. Before you can access the data, you need to find the table name with the data.
+(Hint: Tab completion is helpful whenever you can't remember a command. Type client. and then hit the tab key. Don't forget the period before hitting tab.)
+
+****************
+# Your code here to find the table name
+tables = list(client.list_tables(dataset))
+
+for table in tables:
+    print(table.table_id)
+
+taxi_trips
+
+# Write the table name as a string below
+table_name = 'taxi_trips'
+
+# Check your answer
+q_1.check()
+
+Correct
+
+For the solution, uncomment the line below.
+
+q_1.solution()
+
+Solution:
+
+# List all the tables in the dataset
+tables = list(client.list_tables(dataset))
+
+# Print names of all tables in the dataset (there is only one!)
+for table in tables:  
+    print(table.table_id)
+
+table_name = 'taxi_trips'
+
+****************
+
+<Exercise 2 - Peek at the data>
+Use the next code cell to peek at the top few rows of the data. Inspect the data and see if any issues with data quality are immediately obvious.
+
+****************
+# Your code here
+table_ref = dataset_ref.table("taxi_trips")
+table = client.get_table(table_ref)
+client.list_rows(table, max_results=5).to_dataframe()
+
+unique_key	taxi_id	trip_start_timestamp	trip_end_timestamp	trip_seconds	trip_miles	pickup_census_tract	dropoff_census_tract	pickup_community_area	dropoff_community_area	...	extras	trip_total	payment_type	company	pickup_latitude	pickup_longitude	pickup_location	dropoff_latitude	dropoff_longitude	dropoff_location
+0	451b0f8db9fceca460f22f05aba5b13a1b670cab	9b9e44c129b4382098a2bceccf6f941ee1bf1d25c7b24d...	2019-05-12 05:45:00+00:00	2019-05-12 06:00:00+00:00	1380	19.10	NaN	NaN	11	71	...	0.0	47.00	Cash	Taxi Affiliation Services	41.978830	-87.771167	POINT (-87.771166703 41.9788295262)	41.744205	-87.656306	POINT (-87.6563059862 41.7442051463)
+1	4523f0f3e6be1d3b214c7a2f94789fdb48798afc	5413bb090b3b9f8f31943d28629c5fa9aa64bf2da5f140...	2019-05-16 19:00:00+00:00	2019-05-16 19:15:00+00:00	1440	3.00	1.703108e+10	1.703124e+10	8	24	...	0.0	14.25	Credit Card	Medallion Leasin	41.907492	-87.635760	POINT (-87.6357600901 41.9074919303)	41.899507	-87.679600	POINT (-87.6796002867 41.8995065476)
+2	451e3b59572acb6feddf747acc0c59df316d80db	3cc07933fdf2b81d7ba8ad2e7eff9b52c2a427e45ead57...	2019-05-11 10:15:00+00:00	2019-05-11 10:45:00+00:00	1680	0.00	NaN	NaN	30	43	...	0.0	3.25	Cash	Blue Ribbon Taxi Association Inc.	41.839087	-87.714004	POINT (-87.714003807 41.8390869059)	41.761578	-87.572782	POINT (-87.5727819867 41.7615779081)
+3	451853bbf108cc7a3ec3460e4439aff87922bcd5	13211c2747462616a339ca520978b83ccd7fe5c490b860...	2019-05-19 01:00:00+00:00	2019-05-19 01:00:00+00:00	0	0.00	NaN	NaN	19	19	...	0.0	3.25	Cash	Taxi Affiliation Services	41.927261	-87.765502	POINT (-87.7655016086 41.9272609555)	41.927261	-87.765502	POINT (-87.7655016086 41.9272609555)
+4	4519480451600c55706d4b9937b4db0a4842b206	f0d3346678be38422d39a57255c327ec348ad690f71c25...	2019-05-25 18:45:00+00:00	2019-05-25 19:00:00+00:00	789	3.26	NaN	NaN	19	23	...	0.0	11.75	Cash	Flash Cab	41.927261	-87.765502	POINT (-87.7655016086 41.9272609555)	41.900070	-87.720918	POINT (-87.7209182385 41.9000696026)
+
+After deciding whether you see any important issues, run the code cell below.
+
+# Check your answer (Run this code cell to receive credit!)
+q_2.solution()
+
+Solution:
+You can see the data by calling:
+
+# Construct a reference to the "taxi_trips" table
+table_ref = dataset_ref.table("taxi_trips")
+
+# API request - fetch the table
+table = client.get_table(table_ref)
+
+# Preview the first five lines of the "taxi_trips" table
+client.list_rows(table, max_results=5).to_dataframe()
+
+
+Some location fields have values of None or NaN. That is a problem if we want to use those fields.
+****************
+
+<Exercise 3 - Determine when this data is from>
+If the data is sufficiently old, we might be careful before assuming the data is still relevant to traffic patterns today. Write a query that counts the number of trips in each year.
+Your results should have two columns:
+1} year - the year of the trips
+2} num_trips - the number of trips in that year
+
+Hints:
+1} When using GROUP BY and ORDER BY, you should refer to the columns by the alias year that you set at the top of the SELECT query.
+2} The SQL code to SELECT the year from trip_start_timestamp is SELECT EXTRACT(YEAR FROM trip_start_timestamp)
+3} The FROM field can be a little tricky until you are used to it. The format is:
+   - A backtick (the symbol `).
+   - The project name. In this case it is bigquery-public-data.
+   - A period.
+   - The dataset name. In this case, it is chicago_taxi_trips.
+   - A period.
+   - The table name. You used this as your answer in 1) Find the data.
+   - A backtick (the symbol `).
+
+****************
+# Your code goes here
+rides_per_year_query = """
+                       SELECT EXTRACT(YEAR FROM trip_start_timestamp) AS year, COUNT(1) AS num_trips
+                       FROM `bigquery-public-data.chicago_taxi_trips.taxi_trips`
+                       GROUP BY year
+                       ORDER BY year
+                       """
+
+# Set up the query (cancel the query if it would use too much of 
+# your quota)
+safe_config = bigquery.QueryJobConfig(maximum_bytes_billed=10**10)
+rides_per_year_query_job = client.query(rides_per_year_query, job_config=safe_config) # Your code goes here
+
+# API request - run the query, and return a pandas DataFrame
+rides_per_year_result = rides_per_year_query_job.to_dataframe() # Your code goes here
+
+# View results
+print(rides_per_year_result)
+
+# Check your answer
+q_3.check()
+
+ year  num_trips
+0   2013   27217300
+1   2014   37395079
+2   2015   32385527
+3   2016   31756403
+4   2017   24979611
+5   2018   20731105
+6   2019   16476440
+7   2020    3888831
+8   2021    3947677
+9   2022    6382071
+10  2023    6495414
+11  2024         35
+
+Correct
+
+For a hint or the solution, uncomment the appropriate line below.
+
+q_3.hint()
+q_3.solution()
+
+Hint:
+Start your query with SELECT EXTRACT(YEAR FROM trip_start_timestamp) AS year, COUNT(1) AS num_trips.
+
+Solution:
+
+rides_per_year_query = """
+                       SELECT EXTRACT(YEAR FROM trip_start_timestamp) AS year, 
+                              COUNT(1) AS num_trips
+                       FROM `bigquery-public-data.chicago_taxi_trips.taxi_trips`
+                       GROUP BY year
+                       ORDER BY year
+                       """
+
+# Set up the query (cancel the query if it would use too much of 
+# your quota)
+safe_config = bigquery.QueryJobConfig(maximum_bytes_billed=10**10)
+rides_per_year_query_job = client.query(rides_per_year_query, job_config=safe_config)
+
+# API request - run the query, and return a pandas DataFrame
+rides_per_year_result = rides_per_year_query_job.to_dataframe()
+****************
+
+<Exercise 4 - Dive slightly deeper>
+You'd like to take a closer look at rides from 2016. Copy the query you used above in rides_per_year_query into the cell below for rides_per_month_query. Then modify it in two ways:
+1} Use a WHERE clause to limit the query to data from 2016.
+2} Modify the query to extract the month rather than the year.
+
+****************
+# Your code goes here
+rides_per_month_query = """
+                        SELECT EXTRACT (MONTH FROM trip_start_timestamp) AS month, COUNT(1) AS num_trips
+                        FROM `bigquery-public-data.chicago_taxi_trips.taxi_trips`
+                        WHERE EXTRACT(YEAR FROM trip_start_timestamp) = 2016
+                        GROUP BY month
+                        ORDER BY month
+                        """ 
+​
+# Set up the query
+safe_config = bigquery.QueryJobConfig(maximum_bytes_billed=10**10)
+rides_per_month_query_job = client.query(rides_per_month_query, job_config=safe_config) # Your code goes here
+​
+# API request - run the query, and return a pandas DataFrame
+rides_per_month_result = rides_per_month_query_job.to_dataframe() # Your code goes here
+​
+# View results
+print(rides_per_month_result)
+​
+# Check your answer
+q_4.check()
+
+month  num_trips
+0       1    2510389
+1       2    2568433
+2       3    2851106
+3       4    2854290
+4       5    2859147
+5       6    2841872
+6       7    2682912
+7       8    2629482
+8       9    2532650
+9      10    2725340
+10     11    2387790
+11     12    2312992
+
+Correct
+
+For a hint or the solution, uncomment the appropriate line below.
+
+q_4.hint()
+q_4.solution()
+
+Hint:
+Start your query with SELECT EXTRACT(MONTH FROM trip_start_timestamp) AS month, COUNT(1) AS num_trips.
+
+Solution:
+
+rides_per_month_query = """
+                        SELECT EXTRACT(MONTH FROM trip_start_timestamp) AS month, 
+                               COUNT(1) AS num_trips
+                        FROM `bigquery-public-data.chicago_taxi_trips.taxi_trips`
+                        WHERE EXTRACT(YEAR FROM trip_start_timestamp) = 2016
+                        GROUP BY month
+                        ORDER BY month
+                        """
+
+# Set up the query (cancel the query if it would use too much of 
+# your quota)
+safe_config = bigquery.QueryJobConfig(maximum_bytes_billed=10**10)
+rides_per_month_query_job = client.query(rides_per_month_query, job_config=safe_config)
+
+# API request - run the query, and return a pandas DataFrame
+rides_per_month_result = rides_per_month_query_job.to_dataframe()
+****************
+
+<Exercise 5 - Write the query>
+It's time to step up the sophistication of your queries. Write a query that shows, for each hour of the day in the dataset, the corresponding number of trips and average speed.
+Your results should have three columns:
+1} hour_of_day - sort by this column, which holds the result of extracting the hour from trip_start_timestamp.
+2} num_trips - the count of the total number of trips in each hour of the day (e.g. how many trips were started between 6AM and 7AM, independent of which day it occurred on).
+3} avg_mph - the average speed, measured in miles per hour, for trips that started in that hour of the day. Average speed in miles per hour is calculated as:
+3600 * SUM(trip_miles) / SUM(trip_seconds). (The value 3600 is used to convert from seconds to hours.)
+
+Restrict your query to data meeting the following criteria:
+1} a trip_start_timestamp > 2016-01-01 and < 2016-04-01
+2} trip_seconds > 0 and trip_miles > 0
+
+You will use a common table expression (CTE) to select just the relevant rides. Because this dataset is very big, this CTE should select only the columns you'll need to create the final
+output (though you won't actually create those in the CTE -- instead you'll create those in the later SELECT statement below the CTE).
+This is a much harder query than anything you've written so far. Good luck!
+
+****************
+# Your code goes here
+speeds_query = """
+               WITH RelevantRides AS
+               (
+                   SELECT EXTRACT(HOUR FROM trip_start_timestamp) AS hour_of_day, trip_miles, trip_seconds
+                   FROM `bigquery-public-data.chicago_taxi_trips.taxi_trips`
+                   WHERE trip_start_timestamp > '2016-01-01' AND
+                         trip_start_timestamp < '2016-04-01' AND
+                         trip_seconds > 0 AND
+                         trip_miles > 0
+               )
+               SELECT hour_of_day,
+                      COUNT(1) AS num_trips,
+                      3600 * SUM(trip_miles) / SUM(trip_seconds) AS avg_mph
+               FROM RelevantRides
+               GROUP BY hour_of_day
+               ORDER BY hour_of_day
+               """
+
+# Set up the query
+safe_config = bigquery.QueryJobConfig(maximum_bytes_billed=10**10)
+speeds_query_job = client.query(speeds_query, job_config=safe_config) # Your code here
+
+# API request - run the query, and return a pandas DataFrame
+speeds_result = speeds_query_job.to_dataframe() # Your code here
+
+# View results
+print(speeds_result)
+
+# Check your answer
+q_5.check()
+
+hour_of_day  num_trips    avg_mph
+0             0     203092  20.191744
+1             1     178046  18.628598
+2             2     143447  18.444370
+3             3     108899  19.273107
+4             4      80067  27.599669
+5             5      75786  33.065604
+6             6     102254  28.533112
+7             7     187585  19.884592
+8             8     284223  16.787900
+9             9     306854  18.434124
+10           10     279762  20.091309
+11           11     294006  20.926340
+12           12     311522  20.063901
+13           13     317225  19.766321
+14           14     312629  19.309655
+15           15     319953  18.515564
+16           16     349455  17.168814
+17           17     394324  14.641375
+18           18     431991  15.381995
+19           19     416743  17.795008
+20           20     356279  20.347398
+21           21     318363  22.584731
+22           22     289886  21.129847
+23           23     241690  20.259757
+
+Correct
+
+For the solution, uncomment the appropriate line below.
+
+q_5.solution()
+
+Solution:
+
+speeds_query = """
+               WITH RelevantRides AS
+               (
+                   SELECT EXTRACT(HOUR FROM trip_start_timestamp) AS hour_of_day, 
+                          trip_miles, 
+                          trip_seconds
+                   FROM `bigquery-public-data.chicago_taxi_trips.taxi_trips`
+                   WHERE trip_start_timestamp > '2016-01-01' AND 
+                         trip_start_timestamp < '2016-04-01' AND 
+                         trip_seconds > 0 AND 
+                         trip_miles > 0
+               )
+               SELECT hour_of_day, 
+                      COUNT(1) AS num_trips, 
+                      3600 * SUM(trip_miles) / SUM(trip_seconds) AS avg_mph
+               FROM RelevantRides
+               GROUP BY hour_of_day
+               ORDER BY hour_of_day
+               """
+
+# Set up the query (cancel the query if it would use too much of 
+# your quota)
+safe_config = bigquery.QueryJobConfig(maximum_bytes_billed=10**10)
+speeds_query_job = client.query(speeds_query, job_config=safe_config)
+
+# API request - run the query, and return a pandas DataFrame
+speeds_result = speeds_query_job.to_dataframe()
+
+# View results
+print(speeds_result)
+
+
+That's a hard query. If you made good progress towards the solution, congratulations!
+****************
