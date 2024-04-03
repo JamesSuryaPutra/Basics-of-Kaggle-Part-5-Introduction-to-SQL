@@ -1,10 +1,7 @@
-January 23rd, 2024
-Basics of Kaggle
--5th Course: Introduction to SQL-
-
-=======================
+Date: January 23rd, 2024
 User: James Surya Putra
-=======================
+
+# Basics of Kaggle: 5th Course - Introduction to SQL
 
 DISCLAIMER:
 - All tutorials and exercises are taken, including questions, submissions, hints, and solutions.
