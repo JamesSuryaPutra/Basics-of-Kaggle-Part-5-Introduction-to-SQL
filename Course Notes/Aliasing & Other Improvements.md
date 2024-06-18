@@ -1,4 +1,4 @@
-# Aliasing & Other Improvements
+# Aliasing and other improvements
 A couple hints to make your queries even better:
 
 1}	The column resulting from COUNT(id) was called f0__. That's not a very descriptive name. You can change the name by adding AS NumPosts after you specify the aggregation. This is called
